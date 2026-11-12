@@ -6,9 +6,9 @@ import { useLang } from '../context/LangContext';
 import { personalInfo } from '../data/cvData';
 import { GithubIcon, LinkedinIcon } from './Icons';
 
-const SERVICE_ID  = import.meta.env.VITE_EMAILJS_SERVICE_ID  as string;
-const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID as string;
-const PUBLIC_KEY  = import.meta.env.VITE_EMAILJS_PUBLIC_KEY  as string;
+const SERVICE_ID  = (import.meta.env.VITE_EMAILJS_SERVICE_ID as string) || 'service_gweygxk';
+const TEMPLATE_ID = (import.meta.env.VITE_EMAILJS_TEMPLATE_ID as string) || 'template_1l3unzd';
+const PUBLIC_KEY  = (import.meta.env.VITE_EMAILJS_PUBLIC_KEY as string) || 'ID0U3W2KxG6kY1JV0';
 
 type FormStatus = 'idle' | 'loading' | 'success' | 'error';
 
