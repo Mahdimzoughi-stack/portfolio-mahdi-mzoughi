@@ -1,9 +1,16 @@
 import { useRef, useState } from 'react';
+import emailjs from '@emailjs/browser';
 import { motion, useInView } from 'framer-motion';
-import { Mail, MapPin, Send, CheckCircle, AlertCircle } from 'lucide-react';
+import { Mail, MapPin, Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useLang } from '../context/LangContext';
 import { personalInfo } from '../data/cvData';
 import { GithubIcon, LinkedinIcon } from './Icons';
+
+const SERVICE_ID  = import.meta.env.VITE_EMAILJS_SERVICE_ID  as string;
+const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID as string;
+const PUBLIC_KEY  = import.meta.env.VITE_EMAILJS_PUBLIC_KEY  as string;
+
+type FormStatus = 'idle' | 'loading' | 'success' | 'error';
 
 export default function Contact() {
   const { t } = useLang();
@@ -12,7 +19,7 @@ export default function Contact() {
 
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [status, setStatus] = useState<'idle' | 'success'>('idle');
+  const [status, setStatus] = useState<FormStatus>('idle');
 
   const validate = () => {
     const errs: Record<string, string> = {};
@@ -27,22 +34,52 @@ export default function Contact() {
     return errs;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Prevent double submission
+    if (status === 'loading') return;
+
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
     setErrors({});
+    setStatus('loading');
 
-    const subjectEncoded = encodeURIComponent(`[Portfolio Contact] ${form.subject} - from ${form.name}`);
-    const bodyEncoded = encodeURIComponent(
-      `Hello Mahdi,\n\nName: ${form.name}\nEmail: ${form.email}\n\nMessage:\n${form.message}\n`
-    );
-    window.location.href = `mailto:${personalInfo.email}?subject=${subjectEncoded}&body=${bodyEncoded}`;
-    setStatus('success');
+    try {
+      const result = await emailjs.send(
+        SERVICE_ID,
+        TEMPLATE_ID,
+        {
+          // Names matching both the template content AND settings fields
+          from_name:  form.name,
+          from_email: form.email,
+          subject:    form.subject,
+          message:    form.message,
+          // Legacy aliases in case template settings still use old variable names
+          name:       form.name,
+          email:      form.email,
+          title:      form.subject,
+        },
+        PUBLIC_KEY,
+      );
+
+      if (result.status === 200) {
+        setStatus('success');
+        // Reset form only after confirmed success
+        setForm({ name: '', email: '', subject: '', message: '' });
+      } else {
+        setStatus('error');
+      }
+    } catch (err) {
+      console.error('[Contact] Error submitting form:', err);
+      setStatus('error');
+    }
   };
+
+  const isLoading = status === 'loading';
 
   return (
     <section id="contact" className="section bg-bg-secondary/40 relative overflow-hidden transition-colors">
@@ -148,9 +185,10 @@ export default function Contact() {
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     placeholder="John Doe"
+                    disabled={isLoading}
                     className={`w-full px-4 py-2.5 rounded-xl bg-white dark:bg-bg-primary/60 border ${
                       errors.name ? 'border-red-500/50' : 'border-slate-300 dark:border-white/10'
-                    } text-text-primary placeholder-text-muted text-xs sm:text-sm focus:border-brand-blue focus:outline-none transition-colors`}
+                    } text-text-primary placeholder-text-muted text-xs sm:text-sm focus:border-brand-blue focus:outline-none transition-colors disabled:opacity-50`}
                   />
                   {errors.name && (
                     <span className="flex items-center gap-1 text-[11px] text-red-500 mt-1">
@@ -169,9 +207,10 @@ export default function Contact() {
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
                     placeholder="john@example.com"
+                    disabled={isLoading}
                     className={`w-full px-4 py-2.5 rounded-xl bg-white dark:bg-bg-primary/60 border ${
                       errors.email ? 'border-red-500/50' : 'border-slate-300 dark:border-white/10'
-                    } text-text-primary placeholder-text-muted text-xs sm:text-sm focus:border-brand-blue focus:outline-none transition-colors`}
+                    } text-text-primary placeholder-text-muted text-xs sm:text-sm focus:border-brand-blue focus:outline-none transition-colors disabled:opacity-50`}
                   />
                   {errors.email && (
                     <span className="flex items-center gap-1 text-[11px] text-red-500 mt-1">
@@ -191,9 +230,10 @@ export default function Contact() {
                   value={form.subject}
                   onChange={(e) => setForm({ ...form, subject: e.target.value })}
                   placeholder="Software Engineer Role / Project Collaboration"
+                  disabled={isLoading}
                   className={`w-full px-4 py-2.5 rounded-xl bg-white dark:bg-bg-primary/60 border ${
                     errors.subject ? 'border-red-500/50' : 'border-slate-300 dark:border-white/10'
-                  } text-text-primary placeholder-text-muted text-xs sm:text-sm focus:border-brand-blue focus:outline-none transition-colors`}
+                  } text-text-primary placeholder-text-muted text-xs sm:text-sm focus:border-brand-blue focus:outline-none transition-colors disabled:opacity-50`}
                 />
                 {errors.subject && (
                   <span className="flex items-center gap-1 text-[11px] text-red-500 mt-1">
@@ -212,9 +252,10 @@ export default function Contact() {
                   value={form.message}
                   onChange={(e) => setForm({ ...form, message: e.target.value })}
                   placeholder="Describe your inquiry or opportunity..."
+                  disabled={isLoading}
                   className={`w-full px-4 py-2.5 rounded-xl bg-white dark:bg-bg-primary/60 border ${
                     errors.message ? 'border-red-500/50' : 'border-slate-300 dark:border-white/10'
-                  } text-text-primary placeholder-text-muted text-xs sm:text-sm focus:border-brand-blue focus:outline-none transition-colors resize-none`}
+                  } text-text-primary placeholder-text-muted text-xs sm:text-sm focus:border-brand-blue focus:outline-none transition-colors resize-none disabled:opacity-50`}
                 />
                 {errors.message && (
                   <span className="flex items-center gap-1 text-[11px] text-red-500 mt-1">
@@ -223,19 +264,36 @@ export default function Contact() {
                 )}
               </div>
 
-              <div className="pt-2 flex items-center justify-between">
+              <div className="pt-2 flex items-center justify-between gap-4">
                 <button
                   type="submit"
-                  className="btn-primary text-xs sm:text-sm py-2.5 px-6"
+                  disabled={isLoading}
+                  className="btn-primary text-xs sm:text-sm py-2.5 px-6 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <span>{t.contact.send}</span>
-                  <Send size={14} />
+                  {isLoading ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>Sending…</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{t.contact.send}</span>
+                      <Send size={14} />
+                    </>
+                  )}
                 </button>
 
                 {status === 'success' && (
                   <span className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
                     <CheckCircle size={14} />
-                    Email client opened!
+                    Message sent! I'll get back to you soon.
+                  </span>
+                )}
+
+                {status === 'error' && (
+                  <span className="flex items-center gap-1.5 text-xs text-red-500 font-medium">
+                    <AlertCircle size={14} />
+                    Failed to send. Please try again or email me directly.
                   </span>
                 )}
               </div>

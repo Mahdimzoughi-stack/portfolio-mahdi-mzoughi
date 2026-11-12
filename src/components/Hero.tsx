@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, ArrowDown, Sparkles, ChevronRight, User, Code2 } from 'lucide-react';
+import { Download, ArrowDown, Sparkles, ChevronRight, User, Code2, Orbit } from 'lucide-react';
 import { useLang } from '../context/LangContext';
 import { personalInfo } from '../data/cvData';
 import { GithubIcon, LinkedinIcon } from './Icons';
 import profileImg from '../assets/profile.jpg';
+import TechOrbit from './TechOrbit';
+import NeuralUniverseBackground from './NeuralUniverseBackground';
 
 const EXPERTISE = [
   'Java & Spring Boot',
@@ -29,28 +31,9 @@ const CODE_LINES = [
   { indent: 0, content: '}' },
 ];
 
-function FloatingOrb({ size, x, y, color, delay }: { size: number; x: string; y: string; color: string; delay: number }) {
-  return (
-    <motion.div
-      className="absolute rounded-full pointer-events-none"
-      style={{
-        width: size,
-        height: size,
-        left: x,
-        top: y,
-        background: color,
-        filter: 'blur(60px)',
-        opacity: 0.15,
-      }}
-      animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }}
-      transition={{ duration: 6 + delay, repeat: Infinity, delay }}
-    />
-  );
-}
-
 export default function Hero() {
   const { t } = useLang();
-  const [heroTab, setHeroTab] = useState<'profile' | 'code'>('profile');
+  const [heroTab, setHeroTab] = useState<'orbit' | 'profile' | 'code'>('orbit');
 
   const scrollToProjects = () => {
     document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' });
@@ -77,12 +60,26 @@ export default function Hero() {
       id="home"
       className="relative min-h-screen flex items-center justify-center overflow-hidden bg-mesh grid-pattern"
     >
-      {/* Background Orbs */}
-      <FloatingOrb size={600} x="-10%" y="-20%" color="radial-gradient(circle, #2563EB, transparent)" delay={0} />
-      <FloatingOrb size={400} x="60%" y="30%" color="radial-gradient(circle, #06B6D4, transparent)" delay={2} />
-      <FloatingOrb size={300} x="20%" y="60%" color="radial-gradient(circle, #2563EB, transparent)" delay={4} />
+      {/* ════════════════════════════════════════════════════════
+          NEURAL UNIVERSE BACKGROUND  — covers the full section
+          pointer-events:none is set inside the component
+          ════════════════════════════════════════════════════════ */}
+      <NeuralUniverseBackground />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-20">
+      {/* Subtle radial vignette on top of canvas for text legibility */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          zIndex: 1,
+          background:
+            'radial-gradient(ellipse 70% 60% at 20% 50%, transparent 40%, rgba(8,13,26,0.45) 100%)',
+        }}
+      />
+
+      {/* ════════════════════════════════════════════════════
+          ALL HERO CONTENT  — z-index above canvas
+          ════════════════════════════════════════════════════ */}
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-20" style={{ zIndex: 2 }}>
         <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[85vh]">
 
           {/* LEFT — Text Content */}
@@ -225,7 +222,7 @@ export default function Hero() {
             </motion.div>
           </motion.div>
 
-          {/* RIGHT — Interactive Showcase: Portrait & Code IDE */}
+          {/* RIGHT — Interactive Showcase */}
           <motion.div
             initial={{ opacity: 0, x: 60 }}
             animate={{ opacity: 1, x: 0 }}
@@ -235,14 +232,25 @@ export default function Hero() {
             <motion.div
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-              className="relative max-w-md mx-auto"
+              className="relative max-w-md xl:max-w-lg mx-auto"
             >
               {/* Tab Switcher */}
               <div className="flex items-center justify-between mb-4 px-1">
                 <div className="inline-flex p-1 rounded-xl glass-card border border-brand-blue/30 backdrop-blur-xl">
                   <button
+                    onClick={() => setHeroTab('orbit')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 ${
+                      heroTab === 'orbit'
+                        ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-md shadow-emerald-500/25'
+                        : 'text-text-secondary hover:text-text-primary'
+                    }`}
+                  >
+                    <Orbit size={13} />
+                    <span>Orbite</span>
+                  </button>
+                  <button
                     onClick={() => setHeroTab('profile')}
-                    className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 ${
                       heroTab === 'profile'
                         ? 'bg-gradient-to-r from-brand-blue to-cyan-500 text-white shadow-md'
                         : 'text-text-secondary hover:text-text-primary'
@@ -253,7 +261,7 @@ export default function Hero() {
                   </button>
                   <button
                     onClick={() => setHeroTab('code')}
-                    className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 ${
                       heroTab === 'code'
                         ? 'bg-gradient-to-r from-brand-blue to-cyan-500 text-white shadow-md'
                         : 'text-text-secondary hover:text-text-primary'
@@ -272,7 +280,38 @@ export default function Hero() {
 
               {/* Showcase Card */}
               <AnimatePresence mode="wait">
-                {heroTab === 'profile' ? (
+                {heroTab === 'orbit' ? (
+                  <motion.div
+                    key="orbit"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.35 }}
+                    className="relative rounded-3xl p-4 bg-[#080d18]/90 dark:bg-black/90 border border-emerald-500/30 shadow-2xl backdrop-blur-xl overflow-hidden min-h-[480px] flex items-center justify-center"
+                  >
+                    {/* Background Code Snippets watermark */}
+                    <div className="absolute top-4 left-4 font-mono text-[10px] text-emerald-400/20 pointer-events-none select-none text-left leading-relaxed hidden sm:block">
+                      <div className="text-emerald-500/40 font-bold">// whoami.ts</div>
+                      <div>const dev = &#123;</div>
+                      <div className="pl-2">role: "Software Engineer",</div>
+                      <div className="pl-2">openToWork: true,</div>
+                      <div className="pl-2">school: "ESPRIT"</div>
+                      <div>&#125;;</div>
+                    </div>
+
+                    <div className="absolute top-4 right-4 font-mono text-[10px] text-cyan-400/20 pointer-events-none select-none text-right leading-relaxed hidden sm:block">
+                      <div className="text-cyan-500/40 font-bold">// projects.ts</div>
+                      <div>const p = [</div>
+                      <div className="pr-2">"SIMEG - Plateforme RH",</div>
+                      <div className="pr-2">"Vermeg Group PFE",</div>
+                      <div className="pr-2">"Microservices & AI"</div>
+                      <div>];</div>
+                    </div>
+
+                    {/* Orbital System */}
+                    <TechOrbit />
+                  </motion.div>
+                ) : heroTab === 'profile' ? (
                   <motion.div
                     key="profile"
                     initial={{ opacity: 0, scale: 0.95 }}
@@ -401,6 +440,7 @@ export default function Hero() {
         animate={{ opacity: 1 }}
         transition={{ delay: 2 }}
         className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-text-muted hover:text-text-primary transition-colors group"
+        style={{ zIndex: 2 }}
         aria-label="Scroll to About section"
       >
         <span className="text-xs font-medium tracking-widest uppercase">Scroll</span>
@@ -423,7 +463,7 @@ function renderCodeLine(content: string) {
     const [key, ...rest] = content.split('=');
     return (
       <>
-        <span className="text-cyan-300">{key.trim()}</span>
+        <span className="text-cyan-300">{key?.trim()}</span>
         <span className="text-white"> = </span>
         <span className="text-emerald-400">{rest.join('=').trim()}</span>
       </>
